@@ -156,5 +156,4 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Boule
   cibleCamera: {fileID: 0}
-  gestionnaireCharge: {fileID: 0}
   forceDeplacement: 8

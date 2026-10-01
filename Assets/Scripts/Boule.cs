@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -14,6 +15,13 @@ public class Boule : MonoBehaviour
     [SerializeField, Tooltip("Force de déplacement de la boule.")]
     private float forceDeplacement;
 
+    [SerializeField]
+    private PlayerInput controles;
+
+    private float charge = 15f;
+
+    private int nombreDeCharge = 0;
+
     // Force appliquée à la boule pour le déplacement à chaque frame.
     private Vector3 forceAppliquee;
 
@@ -27,7 +35,23 @@ public class Boule : MonoBehaviour
 
     private void Start()
     {
+        controles.actions.FindAction("Commencer").performed += CommencerJeu;
         rigidbody = GetComponent<Rigidbody>();
+    }
+
+    /// <summary>
+    /// Fait commencer le jeu
+    /// </summary>
+    /// <param name="contexte"></param>
+    private void CommencerJeu(InputAction.CallbackContext contexte)
+    {
+        if (nombreDeCharge > 0)
+        {
+            controles.actions.FindAction("Charge").performed += CommencerCharge;
+        }
+        controles.actions.FindAction("Diriger").performed += CommencerDirection;
+        controles.actions.FindAction("Diriger").canceled += ArreterDirection;
+        rigidbody.useGravity = true;
     }
 
     private void OnDestroy()
@@ -40,8 +64,10 @@ public class Boule : MonoBehaviour
         if (controles == null) 
             return;
 
+        controles.actions.FindAction("Charge").performed -= CommencerCharge;
         controles.actions.FindAction("Diriger").performed -= CommencerDirection;
         controles.actions.FindAction("Diriger").canceled -= ArreterDirection;
+        controles.actions.FindAction("Commencer").performed -= CommencerJeu;
     }
 
     private void Update()
@@ -72,6 +98,30 @@ public class Boule : MonoBehaviour
         if(!Mathf.Approximately(forceAppliquee.sqrMagnitude, 0.0f))
         {
             rigidbody.AddForce(forceAppliquee, ForceMode.Force);
+        }
+    }
+
+    private void CommencerCharge(InputAction.CallbackContext contexte)
+    {
+        Coroutine maCoroutine = StartCoroutine(MethodeCoroutine());
+        StopCoroutine(maCoroutine);
+    }
+
+    private IEnumerator MethodeCoroutine()
+    {
+        rigidbody.AddForce(Velocite.normalized * charge, ForceMode.Acceleration);
+        yield return new WaitForSeconds(1.0f);
+        charge = 0f;
+    }
+
+    private void OnTriggerEnter(Collider other)
+    {
+        if (other.CompareTag("Acceleration"))
+        {
+            if (nombreDeCharge < 3)
+            {
+                nombreDeCharge++;
+            }
         }
     }
 }
